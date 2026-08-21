@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*_data/
+train_data_large/
+*_run/
+checkpoints/
+*.pt
+*.pth
+*.npz
+*.zip
+*.log
+.DS_Store
+.vscode/
+.idea/
