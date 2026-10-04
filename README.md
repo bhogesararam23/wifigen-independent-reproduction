@@ -126,5 +126,8 @@ Each MATLAB file should contain a variable named `data` with shape `(19, 20)`.
 
 ## References
 
+- [1] [WiFi-GEN: High-Resolution Indoor Imaging from WiFi Signals Using Generative AI](https://arxiv.org/html/2401.04317v2)
+- [2] [Official WiFiGEN Implementation (GitHub)](https://github.com/CNFightingSjy/WiFiGEN)
+
 [1]: https://arxiv.org/html/2401.04317v2 "WiFi-GEN: High-Resolution Indoor Imaging from WiFi Signals Using Generative AI"
 [2]: https://github.com/CNFightingSjy/WiFiGEN "Official WiFiGEN implementation"

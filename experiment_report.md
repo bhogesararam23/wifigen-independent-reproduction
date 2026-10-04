@@ -102,6 +102,8 @@ Having simulated the 80,000-sample dataset, my next priorities are:
 
 At this stage, I have a working independent baseline and a complete 80,000-sample simulated dataset matching the scale of the WiFi-GEN paper. The simulation, dataset loading, and reconstruction pipelines all run end-to-end. I have documented every assumption and parameter choice so that I can improve the physical approximation and model architecture step by step.
 
-## Reference
+## References
+
+- [1] [WiFi-GEN: High-Resolution Indoor Imaging from WiFi Signals Using Generative AI](https://arxiv.org/html/2401.04317v2)
 
 [1]: https://arxiv.org/html/2401.04317v2 "WiFi-GEN: High-Resolution Indoor Imaging from WiFi Signals Using Generative AI"
