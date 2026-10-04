@@ -14,11 +14,11 @@ The paper uses 20 WiFi nodes around a `3 m × 3 m` area, four object types, and 
 |---|---|
 | `simulate_dataset.py` | Creates random shapes and their simulated WiFi measurements |
 | `train_model.py` | Trains my smaller WiFi-to-image neural network |
-| `smoke_data/` | A very small dataset used to check that everything works |
-| `train_data/` | The 64-sample dataset used for my first experiment |
-| `independent_run_weighted/` | Output from the weighted BCE and Dice-loss experiment |
-| `ablation_no_noise/` | The comparison run without added noise |
-| `experiment_report.md` | My notes and the first experimental results |
+| `smoke_data/` | A 64-sample dataset used to check that everything works |
+| `train_data_large/` | The full 80,000-sample simulated dataset matching the paper's dataset size |
+| `smoke_run/` | Output checkpoint and logs from the smoke test run |
+| `independent_run/` | Output directory for larger training runs |
+| `experiment_report.md` | My notes, experimental results, and dataset documentation |
 
 ## Installing the packages
 
@@ -42,7 +42,7 @@ python simulate_dataset.py \
   --noise-db 0.02
 ```
 
-For a larger experiment, I can increase the number of samples:
+To match the scale of the dataset in the paper, I generated a full 80,000-sample dataset:
 
 ```bash
 python simulate_dataset.py \
@@ -52,7 +52,9 @@ python simulate_dataset.py \
   --noise-db 0.5
 ```
 
-Each `.npz` file contains three arrays. The `wifi` array has shape `(19, 20)`, the `mask` array has shape `(256, 256)`, and `nodes` contains the 20 boundary-node coordinates. The `metadata.json` file records the seed and the main simulation parameters.
+This produced 80,000 `.npz` files and 80,000 corresponding `.png` mask previews under `train_data_large/`, along with `metadata.json`. The samples are evenly balanced with 20,000 examples for each shape class (circle, rectangle, triangle, and ring). Each `.npz` file contains three arrays: `wifi` with shape `(19, 20)`, `mask` with shape `(256, 256)`, and `nodes` containing the 20 boundary-node coordinates. I set `--noise-db 0.5` here because the initial 0.02 dB setting produced virtually no change after normalization.
+
+Because 80,000 samples produce over 160,000 individual files, I intentionally exclude `train_data_large/` and `.npz` files from git in `.gitignore`. Tracking this many small files directly in git would slow down repository operations and bloat the commit history unnecessarily. Because the simulator uses a deterministic random seed (`--seed 2024`), anyone running the command above can reproduce the exact same dataset locally.
 
 ## My simplified WiFi simulator
 
@@ -75,7 +77,7 @@ python train_model.py \
   --cpu
 ```
 
-For a larger experiment, I can use:
+To train on the full 80,000-sample dataset:
 
 ```bash
 python train_model.py \
@@ -98,7 +100,7 @@ My first no-noise comparison was almost identical to the noisy run. The reason i
 
 The most important missing information is the authors’ original 80,000-example dataset, pretrained checkpoint, exact electromagnetic simulator, exact node ordering, object-size distribution, noise model, and detailed training configuration. Because of this, my current result should be described as an **independent baseline implementation**, not as an exact replication of the paper’s reported performance.
 
-The next improvements I would make are a larger dataset, a fixed held-out test set, per-shape IoU for circles, rectangles, triangles, and rings, a better noise model, and a higher-capacity network. I would only report FID after deciding whether the usual image feature extractor is appropriate for these binary synthetic masks.
+I have now generated my own 80,000-sample dataset to match the paper’s data scale. The next improvements I would make are GPU-accelerated training for 50 epochs, a fixed held-out test set, per-shape IoU for circles, rectangles, triangles, and rings, a better noise model, and a higher-capacity network. I would only report FID after deciding whether the usual image feature extractor is appropriate for these binary synthetic masks.
 
 ## Checking the official code later
 

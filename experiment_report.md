@@ -48,15 +48,59 @@ The paper reports an overall IoU of `0.795` for WiFi-GEN and gives shape-specifi
 
 The result is still useful because it confirms that the full pipeline runs: a shape is converted into a WiFi matrix, the model receives the matrix, and the model produces an image-shaped output that can be evaluated with IoU.
 
-## Problems that remain
+## Scaling up to 80,000 simulated samples
 
-The biggest issue is that the exact physical data-generation process is not available. I also do not know the authors’ exact node coordinates, object distributions, noise settings, preprocessing, or checkpoint initialization. In addition, my model is much smaller than the paper’s StyleGAN-based WiFi-GEN model.
+After verifying that my pipeline ran end-to-end with the 64-sample test, I simulated a full dataset of 80,000 samples to match the dataset size described in the WiFi-GEN paper.
 
-The next experiments should use more samples, a separate test set, longer training, per-shape IoU, threshold selection on the validation set, and a stronger simulator. I should also save representative WiFi matrices and predicted masks so that I can inspect whether the model is learning object location, object size, or only the average shape.
+I made one key change to the simulation parameters: I increased the noise level from `0.02 dB` to `0.5 dB`. In my initial experiment, `0.02 dB` was so small that it caused almost no difference after normalizing the power matrix. Setting the noise to `0.5 dB` introduces meaningful variation across transmitter-receiver pairs while keeping the shape signatures identifiable.
+
+### Dataset summary
+
+I saved the entire dataset under `train_data_large/`.
+
+| Setting | Value |
+|---|---:|
+| Output folder | `train_data_large/` |
+| Total samples | 80,000 |
+| Total files | 160,001 (80,000 `.npz`, 80,000 `.png`, 1 `metadata.json`) |
+| Dataset disk size | ~268 MB |
+| Image size | 256 × 256 |
+| WiFi input size | 19 × 20 |
+| Number of boundary nodes | 20 |
+| Room domain size | 3 m × 3 m |
+| Random seed | 2024 |
+| Noise level | 0.5 dB |
+| Circles | 20,000 (25.0%) |
+| Rectangles | 20,000 (25.0%) |
+| Triangles | 20,000 (25.0%) |
+| Rings | 20,000 (25.0%) |
+
+Because my simulation script alternates through the four shape generators in order, the dataset is balanced across all four classes. Each sample contains:
+- A compressed `.npz` file containing the `19 × 20` normalized WiFi power matrix (`wifi`), the `256 × 256` ground-truth binary mask (`mask`), and the 20 boundary coordinates (`nodes`).
+- A corresponding `.png` preview image of the mask (inverted so the object is black and the background is white, matching the paper).
+- An entry in `metadata.json` documenting the shape class and array dimensions.
+
+I verified the dataset by loading the files with my `NpzDataset` class in PyTorch, confirming that all 80,000 samples load cleanly without missing indices or corrupt files. I keep `train_data_large/` in `.gitignore` rather than committing it to git, since tracking 160,001 files would bloat the repository and the entire dataset can be regenerated deterministically at any time using the simulation command.
+
+### Next steps for training
+
+With 80,000 samples, the reconstruction network will have enough diverse shapes, scales, and positions to learn generalizable features rather than overfitting to a small handful of masks.
+
+Because I am currently running on a CPU without a dedicated GPU, training on all 80,000 samples for 50 epochs with batch size 8 would take tens of hours. My plan is to run this full training run on a machine with a CUDA-enabled GPU using the paper’s hyperparameter settings (batch size `8`, learning rate `0.0001`, and 50 epochs). I also plan to evaluate per-shape IoUs separately for circles, rectangles, triangles, and rings so that I can see which geometries are easiest to reconstruct from the boundary power measurements.
+
+## Problems that remain and next steps
+
+The biggest missing piece remains the authors’ original data and simulator: their exact electromagnetic solver, node ordering, object size distribution, and full StyleGAN-based WiFi-GEN architecture. Because of this, my results represent an independent implementation of the idea rather than an exact numerical replication.
+
+Having simulated the 80,000-sample dataset, my next priorities are:
+1. Running the 50-epoch training on a GPU with batch size `8` and learning rate `0.0001`.
+2. Setting aside a fixed held-out test split rather than relying only on random validation folds.
+3. Calculating per-shape IoU for circles, rectangles, triangles, and rings to compare directly against the paper’s shape breakdown (`0.841`, `0.836`, `0.777`, and `0.728`).
+4. Saving representative predicted masks alongside their ground-truth shapes to inspect where the reconstruction errors happen.
 
 ## Conclusion
 
-At this stage, I would describe the project as a working independent baseline and a learning implementation of the paper’s main idea. It is not yet an exact reproduction of the reported numbers. The code and assumptions are documented so that I can improve the physical model and network step by step instead of hiding the missing information.
+At this stage, I have a working independent baseline and a complete 80,000-sample simulated dataset matching the scale of the WiFi-GEN paper. The simulation, dataset loading, and reconstruction pipelines all run end-to-end. I have documented every assumption and parameter choice so that I can improve the physical approximation and model architecture step by step.
 
 ## Reference
 
